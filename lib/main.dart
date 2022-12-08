@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:weather/weather.dart';
 import 'package:intl/intl.dart';
+import 'package:weather_icons/weather_icons.dart';
+import 'package:weather_animation/weather_animation.dart';
+
 
 void main() {
   runApp(const MyApp());
+  
 }
 
 class MyApp extends StatelessWidget {
@@ -14,6 +18,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -52,12 +57,18 @@ class _MyHomePageState extends State<MyHomePage> {
     String name = "day";
     for (int x = 0; x < forecastDataAux.length; x++) {
       if ((DateFormat('EEEE').format(forecastDataAux[x].date!)) != name) {
-        print(name);
+        //Borrem els dies repes per que la api retorna per horas
+        //print(name);
         forecastData.add(forecastDataAux[x]);
         name = DateFormat('EEEE').format(forecastDataAux[x].date!);
       } else {
         name = DateFormat('EEEE').format(forecastDataAux[x].date!);
       }
+    }
+
+    if (forecastData.length > 1) {
+      // Borrem el dia eque esta repetit per que ja surt en gran...
+      forecastData.removeAt(0);
     }
 
     barcelonaInfo = await wf.currentWeatherByCityName("Barcelona");
@@ -77,13 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget getBody(BuildContext context) {
     return Stack(
       children: [
-        Container(
-            decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage("assets/back3.jpg"),
-            fit: BoxFit.cover,
-          ),
-        )),
+        getBackGraund(),
         Column(
           children: [
             const Spacer(),
@@ -97,7 +102,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 borderRadius: const BorderRadius.all(
                   Radius.circular(20),
                 ),
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withOpacity(0.4),
               ),
               child: loaded ? forecast() : Container(),
             ),
@@ -109,49 +114,52 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget getPrincipal() {
-    return Container(
-      child: Column(
-        children: [
-          const Center(
-            child: Text(
-              "Barcelona",
-              style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.normal),
-            ),
+    return Column(
+      children: [
+        const Center(
+          child: Text(
+            "Barcelona",
+            style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.normal),
           ),
-          Center(
-            child: Text(
-              barcelonaInfo.temperature.toString().replaceAll(" Celsius", "º"),
-              style:
-                  const TextStyle(fontSize: 90, color: Colors.white, fontWeight: FontWeight.bold),
-            ),
+        ),
+        Center(
+          child: Text(
+            barcelonaInfo.temperature.toString().replaceAll(" Celsius", "º"),
+            style: const TextStyle(fontSize: 90, color: Colors.white, fontWeight: FontWeight.bold),
           ),
-          Center(
-            child: Text(
-              barcelonaInfo.weatherMain.toString(),
-              style:
-                  const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
-            ),
+        ),
+        Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                barcelonaInfo.weatherMain.toString(),
+                style:
+                    const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              BoxedIcon(getIcon(barcelonaInfo.weatherMain.toString()),
+                  color: Colors.white, size: 32),
+            ],
           ),
-          Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              //crossAxisAlignment: CrossAxisAlignment.,
-              children: [
-                Text(
-                  "L:${barcelonaInfo.tempMin.toString().replaceAll(" Celsius", "º")}",
-                  style: const TextStyle(
-                      fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  "H:${barcelonaInfo.tempMax.toString().replaceAll(" Celsius", "º")}",
-                  style: const TextStyle(
-                      fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
+        ),
+        Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "L:${barcelonaInfo.tempMin.toString().replaceAll(" Celsius", "º")}",
+                style:
+                    const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                " H:${barcelonaInfo.tempMax.toString().replaceAll(" Celsius", "º")}",
+                style:
+                    const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -174,16 +182,73 @@ class _MyHomePageState extends State<MyHomePage> {
                     style: const TextStyle(fontSize: 32, color: Colors.white),
                   ),
                   Text(
-                    forecastData[index].weatherDescription.toString(),
+                    "${forecastData[index].weatherDescription} ",
                     style: const TextStyle(
                       fontSize: 12,
                       color: Colors.white,
                     ),
                   ),
+                  BoxedIcon(getIcon(forecastData[index].weatherMain.toString()),
+                      color: Colors.white),
                 ],
               ),
             ),
           );
         });
+  }
+
+  IconData getIcon(String description) {
+    switch (description) {
+      case "Rain":
+        return WeatherIcons.rain;
+      case "Clouds":
+        return WeatherIcons.cloud;
+      case "Clear":
+        return WeatherIcons.day_sunny;
+      case "Thunderstorm":
+        return WeatherIcons.thunderstorm;
+      case "Drizzle":
+        return WeatherIcons.raindrop;
+      case "Snow":
+        return WeatherIcons.snow;
+      case "Fog":
+        return WeatherIcons.fog;
+      case "Tornado	":
+        return WeatherIcons.tornado;
+    }
+    return WeatherIcons.day_sunny;
+  }
+
+  Widget getBackGraund() {
+    return loaded
+        ? SizedBox(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            child: _getTypeOfBackgraund(),
+          )
+        : Container(
+            decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage("assets/back3.jpg"),
+              fit: BoxFit.cover,
+            ),
+          ));
+  }
+
+  Widget _getTypeOfBackgraund() {
+    String description = barcelonaInfo.weatherMain.toString();
+    switch (description) {
+      case "Rain":
+        return WeatherScene.rainyOvercast.getWeather();
+      case "Clouds":
+        return WeatherScene.sunset.getWeather();
+      case "Clear":
+        return WeatherScene.scorchingSun.getWeather();
+      case "Thunderstorm":
+        return WeatherScene.snowfall.getWeather();
+      case "Snow":
+        return WeatherScene.snowfall.getWeather();
+    }
+    return WeatherScene.weatherEvery.getWeather();
   }
 }
