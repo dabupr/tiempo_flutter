@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:tiempo/map.dart';
 import 'package:weather/weather.dart';
 import 'package:intl/intl.dart';
 import 'package:weather_icons/weather_icons.dart';
@@ -36,9 +37,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  bool loaded = false;
   late Weather barcelonaInfo;
   late List<Weather> forecastData;
+  bool loaded = false;
 
   @override
   void initState() {
@@ -64,7 +65,15 @@ class _MyHomePageState extends State<MyHomePage> {
   void loadData() async {
     List<Weather> forecastDataAux;
     bool gpsON = await isGPSAllow();
-    Position position = Position(longitude: 37.421998333333335, latitude: -122.084, timestamp: DateTime.now(), accuracy: -122.084, altitude: -122.084, heading: 37.42199833333333, speed: 1, speedAccuracy: 1);
+    Position position = Position(
+        longitude: 37.421998333333335,
+        latitude: -122.084,
+        timestamp: DateTime.now(),
+        accuracy: -122.084,
+        altitude: -122.084,
+        heading: 37.42199833333333,
+        speed: 1,
+        speedAccuracy: 1);
     WeatherFactory wf = WeatherFactory("c2a16e82b452224ed739fc97129cc16c");
 
     if (gpsON) {
@@ -109,19 +118,13 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: getBody(context),
-    );
-  }
-
   Widget getBody(BuildContext context) {
     return Stack(
       children: [
         getBackGraund(),
         Column(
           children: [
+            const Spacer(),
             const Spacer(),
             loaded ? getPrincipal() : const CircularProgressIndicator(),
             const Spacer(),
@@ -147,10 +150,25 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget getPrincipal() {
     return Column(
       children: [
-         Center(
-          child: Text(
-            barcelonaInfo.areaName.toString(),
-            style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.normal),
+        Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                barcelonaInfo.areaName.toString(),
+                style: const TextStyle(
+                    fontSize: 28, color: Colors.white, fontWeight: FontWeight.normal),
+              ),
+              IconButton(
+                icon: const Icon(Icons.location_on),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MapSelector()),
+                  );
+                },
+              )
+            ],
           ),
         ),
         Center(
@@ -281,5 +299,12 @@ class _MyHomePageState extends State<MyHomePage> {
         return WeatherScene.snowfall.getWeather();
     }
     return WeatherScene.weatherEvery.getWeather();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: getBody(context),
+    );
   }
 }
