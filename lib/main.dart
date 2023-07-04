@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:weather/weather.dart';
 import 'package:intl/intl.dart';
 import 'package:weather_icons/weather_icons.dart';
 import 'package:weather_animation/weather_animation.dart';
 
-
 void main() {
   runApp(const MyApp());
-  
 }
 
 class MyApp extends StatelessWidget {
@@ -17,8 +16,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      
+      title: 'Weather App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -48,11 +46,40 @@ class _MyHomePageState extends State<MyHomePage> {
     loadData();
   }
 
+  Future<bool> isGPSAllow() async {
+    //bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        //SHOW ERROR SNAKCBAR GPS
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void getWheater() {}
+
   void loadData() async {
+    List<Weather> forecastDataAux;
+    bool gpsON = await isGPSAllow();
+    Position position = Position(longitude: 37.421998333333335, latitude: -122.084, timestamp: DateTime.now(), accuracy: -122.084, altitude: -122.084, heading: 37.42199833333333, speed: 1, speedAccuracy: 1);
     WeatherFactory wf = WeatherFactory("c2a16e82b452224ed739fc97129cc16c");
 
-    List<Weather> forecastDataAux = await wf.fiveDayForecastByCityName("Barcelona");
-    forecastData = await wf.fiveDayForecastByCityName("Barcelona");
+    if (gpsON) {
+      position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.low);
+      //print('Location find');
+      forecastDataAux = await wf.fiveDayForecastByLocation(position.latitude, position.longitude);
+      forecastData = await wf.fiveDayForecastByLocation(position.latitude, position.longitude);
+    } else {
+      forecastDataAux = await wf.fiveDayForecastByCityName("Barcelona");
+      forecastData = await wf.fiveDayForecastByCityName("Barcelona");
+    }
+
+    //List<Weather> forecastDataAux = await wf.fiveDayForecastByLocation(position.latitude, position.longitude);
+    //forecastData = await wf.fiveDayForecastByLocation(position.latitude, position.longitude);
+
     forecastData.clear();
     String name = "day";
     for (int x = 0; x < forecastDataAux.length; x++) {
@@ -70,8 +97,12 @@ class _MyHomePageState extends State<MyHomePage> {
       // Borrem el dia eque esta repetit per que ja surt en gran...
       forecastData.removeAt(0);
     }
-
-    barcelonaInfo = await wf.currentWeatherByCityName("Barcelona");
+    if (gpsON) {
+      position = position;
+      barcelonaInfo = await wf.currentWeatherByLocation(position.latitude, position.longitude);
+    } else {
+      barcelonaInfo = await wf.currentWeatherByCityName("Barcelona");
+    }
 
     setState(() {
       loaded = true;
@@ -116,10 +147,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget getPrincipal() {
     return Column(
       children: [
-        const Center(
+         Center(
           child: Text(
-            "Barcelona",
-            style: TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.normal),
+            barcelonaInfo.areaName.toString(),
+            style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.normal),
           ),
         ),
         Center(
