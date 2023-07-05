@@ -41,6 +41,7 @@ dependencies:
   weather_icons: ^3.0.0
   weather_animation: ^0.0.2
   geolocator: ^9.0.2
+  auto_size_text: ^3.0.0
   
 
 dev_dependencies:

@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:tiempo/map.dart';
@@ -126,19 +127,29 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             const Spacer(),
             const Spacer(),
-            loaded ? getPrincipal() : const CircularProgressIndicator(),
+            loaded ? getPrincipal() : Container(),
             const Spacer(),
             const Spacer(),
-            Container(
-              height: (MediaQuery.of(context).size.height / 2),
-              width: MediaQuery.of(context).size.width - 48,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(20),
+            Center(
+              child: Container(
+                height: (MediaQuery.of(context).size.height / 2),
+                width: MediaQuery.of(context).size.width - 48,
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(20),
+                  ),
+                  color: Colors.black.withOpacity(0.4),
                 ),
-                color: Colors.black.withOpacity(0.4),
+                child: loaded
+                    ? forecast()
+                    : const Center(
+                        child: SizedBox(
+                          height: 45,
+                          width: 45,
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
               ),
-              child: loaded ? forecast() : Container(),
             ),
             const Spacer(),
           ],
@@ -153,11 +164,20 @@ class _MyHomePageState extends State<MyHomePage> {
         Center(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
             children: [
-              Text(
-                barcelonaInfo.areaName.toString(),
-                style: const TextStyle(
-                    fontSize: 28, color: Colors.white, fontWeight: FontWeight.normal),
+              Flexible(
+                child: Text(
+                  barcelonaInfo.areaName.toString(),
+                  //'Holaaaaaaaa HolaaaaaaaaHolaaaaaaaa',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 32,
+                    color: Colors.white,
+                    fontWeight: FontWeight.normal,
+
+                  ),
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.location_on),
@@ -275,13 +295,11 @@ class _MyHomePageState extends State<MyHomePage> {
             height: MediaQuery.of(context).size.height,
             child: _getTypeOfBackgraund(),
           )
-        : Container(
-            decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage("assets/back3.jpg"),
-              fit: BoxFit.cover,
-            ),
-          ));
+        : SizedBox(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            child: WeatherScene.weatherEvery.getWeather(),
+          );
   }
 
   Widget _getTypeOfBackgraund() {
