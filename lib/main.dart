@@ -1,4 +1,3 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:tiempo/map.dart';
@@ -162,33 +161,33 @@ class _MyHomePageState extends State<MyHomePage> {
     return Column(
       children: [
         Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              Flexible(
-                child: Text(
-                  barcelonaInfo.areaName.toString(),
-                  //'Holaaaaaaaa HolaaaaaaaaHolaaaaaaaa',
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    color: Colors.white,
-                    fontWeight: FontWeight.normal,
-
+          child: GestureDetector(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Flexible(
+                  child: Text(
+                    barcelonaInfo.areaName.toString(),
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 32,
+                      color: Colors.white,
+                      fontWeight: FontWeight.normal,
+                    ),
                   ),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.location_on),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MapSelector()),
-                  );
-                },
-              )
-            ],
+                const Icon(
+                  Icons.location_on,
+                )
+              ],
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => LocationAppExample()),
+              );
+            },
           ),
         ),
         Center(
