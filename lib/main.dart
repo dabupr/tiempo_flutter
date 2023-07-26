@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:tiempo/map.dart';
 import 'package:weather/weather.dart';
@@ -13,7 +14,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Weather app'),
     );
   }
 }
@@ -40,6 +40,12 @@ class _MyHomePageState extends State<MyHomePage> {
   late Weather barcelonaInfo;
   late List<Weather> forecastData;
   bool loaded = false;
+  bool postionFromMapSelected = false;
+  late double latitudeMap;
+  late double longitudeMap;
+
+  double defaultMapLatitude = 41.3887900; //The cordenates that show when you open the map
+  double defaultMapLongitude = 2.1589900; //The cordenates that show when you open the map
 
   @override
   void initState() {
@@ -48,19 +54,16 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<bool> isGPSAllow() async {
-    //bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        //SHOW ERROR SNAKCBAR GPS
+        //ToDo SHOW ERROR SNAKCBAR GPS
         return false;
       }
     }
     return true;
   }
-
-  void getWheater() {}
 
   void loadData() async {
     List<Weather> forecastDataAux;
@@ -74,27 +77,34 @@ class _MyHomePageState extends State<MyHomePage> {
         heading: 37.42199833333333,
         speed: 1,
         speedAccuracy: 1);
+
     WeatherFactory wf = WeatherFactory("c2a16e82b452224ed739fc97129cc16c");
-
-    if (gpsON) {
+    if (postionFromMapSelected) {
+      forecastData = await wf.fiveDayForecastByLocation(latitudeMap, longitudeMap);
+      forecastDataAux = List.from(forecastData);
+      barcelonaInfo = await wf.currentWeatherByLocation(latitudeMap, longitudeMap);
+      defaultMapLatitude = latitudeMap;
+      defaultMapLongitude = longitudeMap;
+    } else if (gpsON) {
       position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.low);
-      //print('Location find');
-      forecastDataAux = await wf.fiveDayForecastByLocation(position.latitude, position.longitude);
-      forecastData = await wf.fiveDayForecastByLocation(position.latitude, position.longitude);
-    } else {
-      forecastDataAux = await wf.fiveDayForecastByCityName("Barcelona");
-      forecastData = await wf.fiveDayForecastByCityName("Barcelona");
-    }
 
-    //List<Weather> forecastDataAux = await wf.fiveDayForecastByLocation(position.latitude, position.longitude);
-    //forecastData = await wf.fiveDayForecastByLocation(position.latitude, position.longitude);
+      forecastData = await wf.fiveDayForecastByLocation(position.latitude, position.longitude);
+      forecastDataAux = List.from(forecastData);
+      barcelonaInfo = await wf.currentWeatherByLocation(position.latitude, position.longitude);
+
+      defaultMapLatitude = position.latitude;
+      defaultMapLongitude = position.longitude;
+    } else {
+      forecastData = await wf.fiveDayForecastByCityName("Barcelona");
+      forecastDataAux = List.from(forecastData);
+      barcelonaInfo = await wf.currentWeatherByCityName("Barcelona");
+    }
 
     forecastData.clear();
     String name = "day";
     for (int x = 0; x < forecastDataAux.length; x++) {
       if ((DateFormat('EEEE').format(forecastDataAux[x].date!)) != name) {
         //Borrem els dies repes per que la api retorna per horas
-        //print(name);
         forecastData.add(forecastDataAux[x]);
         name = DateFormat('EEEE').format(forecastDataAux[x].date!);
       } else {
@@ -103,14 +113,9 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     if (forecastData.length > 1) {
+      //For safty reassons
       // Borrem el dia eque esta repetit per que ja surt en gran...
       forecastData.removeAt(0);
-    }
-    if (gpsON) {
-      position = position;
-      barcelonaInfo = await wf.currentWeatherByLocation(position.latitude, position.longitude);
-    } else {
-      barcelonaInfo = await wf.currentWeatherByCityName("Barcelona");
     }
 
     setState(() {
@@ -182,11 +187,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 )
               ],
             ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => LocationAppExample()),
-              );
+            onTap: () async {
+              GeoPoint? point = await mapClicked(context,defaultMapLatitude,defaultMapLongitude);
+              if (point != null) {
+                setState(() {
+                  loadData();
+                  latitudeMap = point.latitude;
+                  longitudeMap = point.longitude;
+                  postionFromMapSelected = true;
+                });
+              }
             },
           ),
         ),
